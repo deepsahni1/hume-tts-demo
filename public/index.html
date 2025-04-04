@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hume Text-to-Speech</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Hume Text-to-Speech</h1>
+    
+    <div class="tts-form">
+      <div class="form-group">
+        <label for="text-input">Text to speak:</label>
+        <textarea id="text-input" rows="4" placeholder="Enter text to be spoken..."></textarea>
+      </div>
+      
+      <div class="voice-selection">
+        <div class="form-group">
+          <input type="radio" id="use-description" name="voice-type" value="description" checked>
+          <label for="use-description">Use voice description</label>
+        </div>
+        
+        <div class="form-group description-group">
+          <label for="voice-description">Voice description:</label>
+          <input type="text" id="voice-description" placeholder="e.g. A refined, British aristocrat">
+        </div>
+        
+        <div class="form-group">
+          <input type="radio" id="use-saved-voice" name="voice-type" value="saved">
+          <label for="use-saved-voice">Use saved voice</label>
+        </div>
+        
+        <div class="form-group saved-voice-group disabled">
+          <label for="saved-voices">Select voice:</label>
+          <select id="saved-voices" disabled>
+            <option value="">Loading voices...</option>
+          </select>
+          <button id="refresh-voices" class="secondary-button">Refresh</button>
+        </div>
+      </div>
+      
+      <div class="form-actions">
+        <button id="generate-button" class="primary-button">Generate Speech</button>
+      </div>
+    </div>
+    
+    <div class="results hidden">
+      <h2>Generated Speech</h2>
+      <audio id="audio-player" controls></audio>
+      
+      <div class="save-voice">
+        <input type="text" id="voice-name" placeholder="Enter name to save this voice">
+        <button id="save-voice-button" class="primary-button">Save Voice</button>
+      </div>
+    </div>
+    
+    <div class="history">
+      <h2>Generation History</h2>
+      <div id="history-list" class="history-list">
+        <p class="empty-message">No generations yet</p>
+      </div>
+    </div>
+  </div>
+  
+  <script src="app.js"></script>
+</body>
+</html> 

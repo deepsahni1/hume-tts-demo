@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Standalone Hume TTS Demo</title>
+  <style>
+    /* CSS styles inline to avoid external dependencies */
+    :root {
+      --primary-color: #4f46e5;
+      --secondary-color: #6366f1;
+      --accent-color: #818cf8;
+      --light-color: #f5f7ff;
+      --dark-color: #1e293b;
+      --background-color: #f8fafc;
+      --border-color: #e2e8f0;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: var(--dark-color);
+      background-color: var(--background-color);
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    h1 {
+      text-align: center;
+      color: var(--primary-color);
+      margin-bottom: 30px;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    
+    input[type="text"],
+    textarea {
+      width: 100%;
+      padding: 10px 15px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+    
+    .primary-button {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    
+    .primary-button:hover {
+      background-color: var(--secondary-color);
+    }
+    
+    .results {
+      background-color: var(--light-color);
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 20px;
+    }
+    
+    .hidden {
+      display: none;
+    }
+    
+    .api-key-section {
+      background-color: #fff3cd;
+      border: 1px solid #ffeeba;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+    }
+    
+    .status-message {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 4px;
+    }
+    
+    .error {
+      background-color: #f8d7da;
+      border: 1px solid #f5c6cb;
+      color: #721c24;
+    }
+    
+    .success {
+      background-color: #d4edda;
+      border: 1px solid #c3e6cb;
+      color: #155724;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Hume Text-to-Speech Demo</h1>
+    
+    <div class="api-key-section">
+      <div class="form-group">
+        <label for="api-key">Your Hume API Key:</label>
+        <input type="text" id="api-key" placeholder="Enter your Hume API key" value="hR2oaLg9ELYijy0mgwsdoElDGFArsalDxdzvo086AE3GEvCl">
+        <p><small>Note: Your API key is stored only in your browser and is never sent to any server except Hume's API.</small></p>
+      </div>
+    </div>
+    
+    <div class="form-group">
+      <label for="text-input">Text to speak:</label>
+      <textarea id="text-input" rows="4" placeholder="Enter text to be spoken...">Welcome to the Hume Text-to-Speech demo!</textarea>
+    </div>
+    
+    <div class="form-group">
+      <label for="voice-description">Voice description:</label>
+      <input type="text" id="voice-description" placeholder="e.g. A friendly, enthusiastic voice" value="A friendly, enthusiastic voice">
+    </div>
+    
+    <button id="generate-button" class="primary-button">Generate Speech</button>
+    
+    <div id="status-message" class="status-message hidden"></div>
+    
+    <div id="results" class="results hidden">
+      <h2>Generated Speech</h2>
+      <audio id="audio-player" controls></audio>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const apiKeyInput = document.getElementById('api-key');
+      const textInput = document.getElementById('text-input');
+      const voiceDescription = document.getElementById('voice-description');
+      const generateButton = document.getElementById('generate-button');
+      const statusMessage = document.getElementById('status-message');
+      const results = document.getElementById('results');
+      const audioPlayer = document.getElementById('audio-player');
+      
+      // Check if API key is stored in localStorage
+      const storedApiKey = localStorage.getItem('humeApiKey');
+      if (storedApiKey) {
+        apiKeyInput.value = storedApiKey;
+      }
+      
+      // Function to show status message
+      function showStatus(message, isError = false) {
+        statusMessage.textContent = message;
+        statusMessage.className = isError 
+          ? 'status-message error' 
+          : 'status-message success';
+        statusMessage.classList.remove('hidden');
+      }
+      
+      // Function to hide status message
+      function hideStatus() {
+        statusMessage.classList.add('hidden');
+      }
+      
+      // Function to convert base64 to Blob
+      function base64ToBlob(base64, mimeType) {
+        const byteCharacters = atob(base64);
+        const byteArrays = [];
+        
+        for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+          const slice = byteCharacters.slice(offset, offset + 512);
+          
+          const byteNumbers = new Array(slice.length);
+          for (let i = 0; i < slice.length; i++) {
+            byteNumbers[i] = slice.charCodeAt(i);
+          }
+          
+          const byteArray = new Uint8Array(byteNumbers);
+          byteArrays.push(byteArray);
+        }
+        
+        return new Blob(byteArrays, { type: mimeType });
+      }
+      
+      // Generate speech function
+      generateButton.addEventListener('click', async function() {
+        // Validate inputs
+        const apiKey = apiKeyInput.value.trim();
+        const text = textInput.value.trim();
+        const description = voiceDescription.value.trim();
+        
+        if (!apiKey) {
+          showStatus('Please enter your Hume API key', true);
+          return;
+        }
+        
+        if (!text) {
+          showStatus('Please enter some text to speak', true);
+          return;
+        }
+        
+        // Save API key to localStorage
+        localStorage.setItem('humeApiKey', apiKey);
+        
+        // Update UI
+        generateButton.disabled = true;
+        generateButton.textContent = 'Generating...';
+        hideStatus();
+        
+        try {
+          // Prepare the request payload
+          const payload = {
+            utterances: [{
+              text,
+              description: description || 'A friendly voice'
+            }]
+          };
+          
+          // Make API request to Hume
+          const response = await fetch('https://api.hume.ai/v0/tts', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Hume-Api-Key': apiKey
+            },
+            body: JSON.stringify(payload)
+          });
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to generate speech');
+          }
+          
+          const data = await response.json();
+          
+          // Get audio from response
+          const audioBase64 = data.generations[0].audio;
+          
+          // Convert base64 to blob and create URL
+          const audioBlob = base64ToBlob(audioBase64, 'audio/wav');
+          const audioUrl = URL.createObjectURL(audioBlob);
+          
+          // Update audio player
+          audioPlayer.src = audioUrl;
+          results.classList.remove('hidden');
+          
+          // Play audio
+          audioPlayer.play();
+          
+          showStatus('Speech generated successfully!');
+          
+        } catch (error) {
+          console.error('Error generating speech:', error);
+          showStatus(`Error: ${error.message}`, true);
+        } finally {
+          // Restore button state
+          generateButton.disabled = false;
+          generateButton.textContent = 'Generate Speech';
+        }
+      });
+    });
+  </script>
+</body>
+</html> 
