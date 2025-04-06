@@ -2,7 +2,8 @@
 
 A modern web application demonstrating the powerful speech generation capabilities of the [Hume AI](https://hume.ai/) Text-to-Speech API.
 
-<img width="481" alt="image" src="https://github.com/user-attachments/assets/d4472e92-400d-4cbe-890c-ddd86727955c" />
+<img width="385" alt="image" src="https://github.com/user-attachments/assets/0b9b6a57-3c70-4d67-bf5b-d1bb5f319f48" />
+
 
 
 ## Features
